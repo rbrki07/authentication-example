@@ -3,6 +3,7 @@
     "name": "Authentication-Example",
     "slug": "Authentication-Example",
     "version": "1.0.0",
+    "scheme": "exp",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
