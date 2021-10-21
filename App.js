@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { Button, StyleSheet, Text, View } from "react-native";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
+import * as LocalAuthentication from "expo-local-authentication";
 import { CLIENT_ID, CLIENT_SECRET } from "@env";
+import { Lock } from "./components/Lock";
 
 // Endpoint
 const discovery = {
@@ -15,6 +17,9 @@ const App = () => {
   const [sessionCode, setSessionCode] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [user, setUser] = useState({});
+  const [localAuthenticationAvailable, setLocalAuthenticationAvailable] =
+    useState(false);
+  const [locked, setLocked] = useState(false);
   const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: CLIENT_ID,
@@ -72,6 +77,17 @@ const App = () => {
     }
   }, [accessToken]);
 
+  useEffect(() => {
+    const checkLocalAuthenticationAvailable = async () => {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      setLocalAuthenticationAvailable(
+        hasHardware === true && isEnrolled === true
+      );
+    };
+    checkLocalAuthenticationAvailable();
+  }, [user?.name]);
+
   return (
     <View style={styles.container}>
       {!user?.name && (
@@ -83,7 +99,25 @@ const App = () => {
           title={"Sign in with GitHub"}
         />
       )}
-      {user?.name && <Text>{`Hello ${user?.name}!`}</Text>}
+      {user?.name && locked === false && <Text>{`Hello ${user?.name}!`}</Text>}
+      {user?.name && localAuthenticationAvailable === true && (
+        <Lock
+          locked={locked}
+          onPress={async (locked) => {
+            if (locked === true) {
+              const { success, error } =
+                await LocalAuthentication.authenticateAsync();
+              if (success === true) {
+                setLocked(false);
+              } else if (error) {
+                console.log("error", error);
+              }
+            } else {
+              setLocked(true);
+            }
+          }}
+        />
+      )}
       <StatusBar style="auto" />
     </View>
   );
