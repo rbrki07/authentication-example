@@ -25,7 +25,7 @@ const Lock = ({ locked, onPress }) => {
       ) : (
         <View style={styles.lock}>
           <Ionicons name={"lock-open"} size={32} />
-          <Text>Unlock</Text>
+          <Text>Lock</Text>
         </View>
       )}
     </TouchableOpacity>
