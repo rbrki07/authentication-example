@@ -3,8 +3,26 @@ import { StatusBar } from "expo-status-bar";
 import { Button, StyleSheet, Text, View } from "react-native";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
 import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from 'expo-secure-store';
 import { CLIENT_ID, CLIENT_SECRET } from "@env";
 import { Lock } from "./components/Lock";
+
+const ACCESS_TOKEN_STORE_KEY = "accessToken"
+
+/**
+ * @returns {Promise<String>} accessToken
+ */
+const readAccessTokenFromSecureStore = async () => {
+  return await SecureStore.getItemAsync(ACCESS_TOKEN_STORE_KEY)
+}
+
+/**
+ * @param {String} accessToken 
+ * @returns {Promise<void>}
+ */
+const writeAccessTokenToSecureStore = async (accessToken) => {
+  await SecureStore.setItemAsync(ACCESS_TOKEN_STORE_KEY, accessToken)
+}
 
 // Endpoint
 const discovery = {
@@ -32,6 +50,10 @@ const App = () => {
   );
 
   useEffect(() => {
+    readAccessTokenFromSecureStore().then((accessToken) => setAccessToken(accessToken))
+  }, [])
+
+  useEffect(() => {
     if (response?.type === "success") {
       const { code: sessionCode } = response.params;
       setSessionCode(sessionCode);
@@ -55,6 +77,7 @@ const App = () => {
         }),
       }).then((response) => {
         response.json().then(({ access_token: accessToken }) => {
+          writeAccessTokenToSecureStore(accessToken);
           setAccessToken(accessToken);
         });
       });
