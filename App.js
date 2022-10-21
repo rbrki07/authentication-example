@@ -10,6 +10,13 @@ import { Lock } from "./components/Lock";
 const ACCESS_TOKEN_STORE_KEY = "accessToken"
 
 /**
+ * @returns {Promise<Boolean>} accessTokenAvailable
+ */
+const isAccessTokenAvailableInSecureStore = async () => {
+  return await readAccessTokenFromSecureStore() !== null
+}
+
+/**
  * @returns {Promise<String>} accessToken
  */
 const readAccessTokenFromSecureStore = async () => {
@@ -34,10 +41,11 @@ const discovery = {
 const App = () => {
   const [sessionCode, setSessionCode] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
+  const [accessTokenAvailable, setAccessTokenAvailable] = useState(false);
   const [user, setUser] = useState({});
   const [localAuthenticationAvailable, setLocalAuthenticationAvailable] =
     useState(false);
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: CLIENT_ID,
@@ -50,8 +58,15 @@ const App = () => {
   );
 
   useEffect(() => {
-    readAccessTokenFromSecureStore().then((accessToken) => setAccessToken(accessToken))
+    isAccessTokenAvailableInSecureStore().then((accessTokenAvailable) => setAccessTokenAvailable(accessTokenAvailable))
   }, [])
+
+  useEffect(() => {
+    // Zugriffe auf Access-Token im Secure-Store nur, wenn lokale Authentifizierung erfolgt ist
+    if (!locked) {
+      readAccessTokenFromSecureStore().then((accessToken) => setAccessToken(accessToken))
+    }
+  }, [locked])
 
   useEffect(() => {
     if (response?.type === "success") {
@@ -79,6 +94,7 @@ const App = () => {
         response.json().then(({ access_token: accessToken }) => {
           writeAccessTokenToSecureStore(accessToken);
           setAccessToken(accessToken);
+          setAccessTokenAvailable(true);
         });
       });
     }
@@ -113,7 +129,7 @@ const App = () => {
 
   return (
     <View style={styles.container}>
-      {!user?.name && (
+      {!user?.name && !accessTokenAvailable && (
         <Button
           disabled={!request}
           onPress={() => {
@@ -123,7 +139,7 @@ const App = () => {
         />
       )}
       {user?.name && locked === false && <Text>{`Hello ${user?.name}!`}</Text>}
-      {user?.name && localAuthenticationAvailable === true && (
+      {(user?.name || accessTokenAvailable) && localAuthenticationAvailable === true && (
         <Lock
           locked={locked}
           onPress={async (locked) => {
