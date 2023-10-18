@@ -13,3 +13,15 @@ Die App basiert auf React Native und Expo.
 5. In das Projektverzeichnis wechseln
 6. `npm install` ausführen
 7. `npm start` ausführen
+
+## Hinweis:
+
+Mit Hilfe dieser App wird eine Authentifizierung auf Basis des Authorization Code Flows vereinfacht dargestellt. Der verwendete Code sollte <u>nicht</u> für produktive Apps verwendet werden!
+
+Die App ist derzeit so aufgebaut, dass sie ein Client-Secret benötigt, um einen Access-Token anzufordern. Ein Client-Secret sollte in produktiven App <u>niemals</u> vorhanden sein! Im Sinne von OAuth ist eine App ein öffentlicher und nicht-vertrauenswürdiger Client und darf daher keine Geheimnisse, wie ein Client-Secret enthalten.
+
+Produktive Apps sollten daher den Authorization Code Flow mit <u>Proof Key for Code Exchange</u> (PKCE) umsetzen, da in diesem Fall kein Client-Secret in der App erforderlich ist.
+
+Leider unterstützt GitHub PKCE derzeit nicht: https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps.
+
+> The PKCE (Proof Key for Code Exchange) parameters code_challenge and code_challenge_method are not supported at this time.
